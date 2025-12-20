@@ -12,23 +12,19 @@
     <link href="https://cdn.jsdelivr.net/npm/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
 
     <style>
-        html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background-color: black !important; font-family: 'Roboto', sans-serif; }
-        
-        /* OVERLAY DE INÍCIO (CORREÇÃO PARA O VÍDEO CARREGAR) */
-        #start-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(135deg, #cc0000 0%, #1a0000 100%);
-            z-index: 99999; display: flex; flex-direction: column;
-            align-items: center; justify-content: center; text-align: center;
+        /* CORREÇÃO 1: Garante que o fundo da página e do canvas sejam transparentes para ver a câmera */
+        html, body { 
+            margin: 0; padding: 0; width: 100%; height: 100%; 
+            overflow: hidden; background-color: transparent !important; 
+            font-family: 'Roboto', sans-serif; 
         }
-        #start-btn {
-            background: #ffcc00; color: #cc0000; font-size: 20px; font-weight: bold;
-            padding: 15px 40px; border: none; border-radius: 50px;
-            cursor: pointer; margin-top: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-            animation: pulse 1.5s infinite;
+        
+        /* Garante que o canvas do A-Frame não tenha fundo preto */
+        canvas.a-canvas {
+            background-color: transparent !important;
+            opacity: 1 !important;
         }
 
-        /* UI DO CHAT */
         #ui-layer {
             position: fixed; bottom: 0; left: 0; width: 100%; height: 100%;
             pointer-events: none; display: flex; flex-direction: column;
@@ -37,7 +33,8 @@
 
         .chat-container {
             pointer-events: auto;
-            background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(179, 0, 0, 0.6) 100%); 
+            /* Fundo gradiente leve para leitura, mas permitindo ver a câmera atrás */
+            background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(179, 0, 0, 0.6) 100%);
             padding: 15px; display: flex; flex-direction: column; gap: 10px;
             padding-bottom: 30px; border-top: 2px solid #ffcc00;
         }
@@ -72,7 +69,7 @@
         #sendBtn { background-color: #cc0000; border: 2px solid #ffcc00; }
 
         #scan-overlay {
-            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            position: fixed; top: 40%; left: 50%; transform: translate(-50%, -50%);
             text-align: center; z-index: 5000; pointer-events: none;
         }
         .scan-box {
@@ -86,28 +83,20 @@
             background: rgba(0,0,0,0.8); padding: 8px 16px; border-radius: 8px; display: inline-block;
         }
         .hidden { display: none !important; }
-        
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
         @keyframes breathe { from { box-shadow: 0 0 10px rgba(255,204,0,0.5); } to { box-shadow: 0 0 30px rgba(255,204,0,1); } }
     </style>
 </head>
 <body>
 
-    <div id="start-overlay">
-        <i class='bx bxs-gift' style="font-size: 80px; color: #ffcc00; margin-bottom: 20px;"></i>
-        <h1 style="color: white; margin: 0;">AMIGO SECRETO</h1>
-        <p style="color: #eee; margin-top: 5px;">Toque para carregar a magia</p>
-        <button id="start-btn">INICIAR CÂMERA</button>
-    </div>
-
     <button onclick="window.location.href='index.html'" style="position: fixed; top: 20px; left: 20px; z-index: 10001; background: rgba(0,0,0,0.5); border: none; color: white; width: 40px; height: 40px; border-radius: 50%; font-size: 24px; cursor: pointer;"><i class='bx bx-arrow-back'></i></button>
 
-    <div id="scan-overlay" class="hidden">
+    <div id="scan-overlay">
         <div class="scan-box"></div>
-        <div class="scan-text">APONTE PARA O LOGO</div>
+        <div class="scan-text">PROCURANDO ALVO...</div>
     </div>
 
-    <div id="ui-layer" class="hidden">
+    <div id="ui-layer">
         <div class="chat-container">
             <div id="chat-display"></div>
             <div class="controls">
@@ -119,8 +108,10 @@
     </div>
 
     <a-scene mindar-image="imageTargetSrc: ./assets/targets.mind; uiScanning: no; filterMinCF:0.0001; filterBeta: 0.001" 
-             color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" 
-             vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
+             color-space="sRGB" 
+             renderer="colorManagement: true, physicallyCorrectLights, alpha: true" 
+             vr-mode-ui="enabled: false" 
+             device-orientation-permission-ui="enabled: false">
         
         <a-assets>
             <video id="mascoteVideo" src="./assets/mascote.mp4" preload="auto" loop="true" crossorigin="anonymous" playsinline webkit-playsinline muted></video>
@@ -149,7 +140,7 @@
         // ==================================================================================
 
 
-        // CHAVES API GEMINI
+        // CHAVES ORIGINAIS
         const KEY_PARTE_1 = "AIzaSyAfx1aiuP9jWzGDoh"; 
         const KEY_PARTE_2 = "E6KxZ6_68wZkt27VI";
         const GEMINI_API_KEY = KEY_PARTE_1 + KEY_PARTE_2;
@@ -162,53 +153,48 @@
         const micBtn = document.getElementById('micBtn');
         const scanOverlay = document.getElementById('scan-overlay');
         const uiLayer = document.getElementById('ui-layer');
-        const startOverlay = document.getElementById('start-overlay');
-        const startBtn = document.getElementById('start-btn');
 
         let isSpeaking = false;
         let synthesis = window.speechSynthesis;
         let voices = [];
         let chatHistory = [];
-        let interactionCount = 0;
-
-        // --- CORREÇÃO 1: Inicialização via Clique (Destrava Vídeo e Áudio) ---
-        startBtn.addEventListener('click', () => {
-            // Força carregamento de vozes
-            loadVoices();
-            // Inicia contexto de áudio
-            const u = new SpeechSynthesisUtterance('');
-            synthesis.speak(u);
-            
-            // "Acorda" o vídeo (Play e Pause imediato para carregar textura)
-            videoEl.play().then(() => {
-                videoEl.pause();
-            }).catch(e => console.log("Erro video:", e));
-
-            startOverlay.style.display = 'none';
-            scanOverlay.classList.remove('hidden');
-        });
+        let interactionCount = 0; // Contador para controlar a enrolação
 
         // PROMPT DO ESPECIALISTA EM ENROLAÇÃO
         function buildSystemPrompt() {
             return `
             Você é o 'thIAguinho Noel', uma IA zoeira e cheia de mistério em uma festa de Amigo Secreto.
-            O AMIGO SECRETO É: ${CONFIG_AMIGO.nome}.
-            DADOS: Cargo: ${CONFIG_AMIGO.cargo}, Visual: ${CONFIG_AMIGO.dica_visual_1}, Mania: ${CONFIG_AMIGO.dica_comportamento}, Hobby: ${CONFIG_AMIGO.hobby}, Frase: "${CONFIG_AMIGO.frase_famosa}".
             
-            SUA MISSÃO: ENROLAR AO MÁXIMO! SEJA ENGRAÇADO, DÊ PISTAS VAGAS.
-            Estamos na pergunta número: {INTERACTION_COUNT}.
-            - Se < 5: NEGUE TUDO. Faça piadas.
-            - Se 5 a 10: Dicas visuais vagas com humor.
-            - Se > 10: Dicas mais fáceis.
-            - NUNCA revele o nome exato antes da pergunta 10, a menos que o usuário acerte explicitamente.
-            - Respostas curtas (máx 2 frases).
+            O AMIGO SECRETO É: ${CONFIG_AMIGO.nome}.
+            DADOS REAIS SOBRE ELE(A):
+            - Cargo: ${CONFIG_AMIGO.cargo}
+            - Visual: ${CONFIG_AMIGO.dica_visual_1}
+            - Mania: ${CONFIG_AMIGO.dica_comportamento}
+            - Hobby: ${CONFIG_AMIGO.hobby}
+            - Frase: "${CONFIG_AMIGO.frase_famosa}"
+
+            SUA MISSÃO: 
+            Os convidados vão fazer perguntas para tentar descobrir quem é.
+            VOCÊ DEVE ENROLAR AO MÁXIMO! SEJA ENGRAÇADO, DÊ PISTAS VAGAS E NÃO ENTREGUE O NOME FACILMENTE.
+
+            REGRAS DE COMPORTAMENTO:
+            1. Estamos na pergunta número: {INTERACTION_COUNT}.
+            2. Se {INTERACTION_COUNT} for menor que 5: NEGUE TUDO. Faça piadas. Diga "Minha bola de cristal tá embaçada" ou "O Papai Noel proibiu contar cedo".
+            3. Se {INTERACTION_COUNT} for entre 5 e 10: Comece a soltar as dicas de 'Visual' ou 'Mania', mas sempre com humor ácido.
+            4. Se {INTERACTION_COUNT} for maior que 10: Pode começar a deixar fácil.
+            5. NUNCA revele o nome exato antes da pergunta número 10, a menos que o usuário acerte o nome explicitamente. Se ele acertar o nome, faça festa e confirme: "ACERTOU MIZERAVI! É o ${CONFIG_AMIGO.nome} mesmo!".
+            6. Respostas curtas! Máximo 2 frases. Fale como um apresentador de auditório animado.
+
+            Se perguntarem o que ele quer de presente, diga: "Talvez ${CONFIG_AMIGO.presente_ideal}, mas quem sabe um par de meias?".
             `;
         }
 
-        // Carregar vozes com repetição (navegadores demoram as vezes)
+        // Inicializa Histórico
+        chatHistory.push({ role: "model", parts: [{ text: "Ho Ho Ho! Eu sei quem é o amigo secreto! Duvido vocês adivinharem. Podem perguntar!" }] });
+        addMessage("thIAguinho", "Ho Ho Ho! Eu sei quem é o amigo secreto! Duvido vocês adivinharem. Podem perguntar!", "msg-ai");
+
         function loadVoices() {
             voices = synthesis.getVoices();
-            if(voices.length === 0) setTimeout(loadVoices, 500);
         }
         loadVoices();
         if(synthesis.onvoiceschanged !== undefined) synthesis.onvoiceschanged = loadVoices;
@@ -216,15 +202,14 @@
         // AR Events
         targetEntity.addEventListener("targetFound", () => {
             scanOverlay.classList.add('hidden');
-            uiLayer.classList.remove('hidden');
-            // Só toca se já tiver passado pelo clique inicial
-            if(startOverlay.style.display === 'none') {
-                videoEl.play();
-            }
+            // CORREÇÃO 2: uiLayer já está visível, então apenas damos play no vídeo
+            videoEl.play();
         });
+        
         targetEntity.addEventListener("targetLost", () => {
             scanOverlay.classList.remove('hidden');
-            uiLayer.classList.add('hidden');
+            // CORREÇÃO 2: Não escondemos mais o uiLayer (chat) quando perde o alvo
+            // uiLayer.classList.add('hidden'); <--- REMOVIDO
             videoEl.pause();
             synthesis.cancel();
         });
@@ -235,12 +220,14 @@
             addMessage("Convidado", text, "msg-user");
             userInput.value = "";
             
+            // Atualiza prompt com contador
             interactionCount++;
             let currentPrompt = buildSystemPrompt().replace("{INTERACTION_COUNT}", interactionCount);
             
+            // Monta payload
             let contents = [
                 { role: "user", parts: [{ text: currentPrompt }] }, 
-                ...chatHistory.slice(-10),
+                ...chatHistory.slice(-10), 
                 { role: "user", parts: [{ text: text }] }
             ];
 
@@ -250,7 +237,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
                         contents: contents, 
-                        generationConfig: { temperature: 1.3 }
+                        generationConfig: { temperature: 1.3 } 
                     })
                 });
                 const data = await response.json();
@@ -260,6 +247,7 @@
                     aiText = data.candidates[0].content.parts[0].text;
                 }
 
+                // Salva no histórico
                 chatHistory.push({ role: "user", parts: [{ text: text }] });
                 chatHistory.push({ role: "model", parts: [{ text: aiText }] });
                 
@@ -272,31 +260,26 @@
             }
         }
 
-        // --- CORREÇÃO 2: Voz Masculina Otimizada ---
+        // VOZ MASCULINA
         function speakMaleVoice(text) {
             synthesis.cancel();
             const utterance = new SpeechSynthesisUtterance(text);
             
-            if(voices.length === 0) voices = synthesis.getVoices();
+            if(voices.length === 0) loadVoices();
             
-            // Tenta encontrar vozes MASCULINAS específicas
-            // 'Daniel' é comum no iOS, 'Google português' no Android muitas vezes tem variante, 
-            // mas se não tiver, usamos o pitch.
+            // Busca voz masculina grave
             const maleVoice = voices.find(v => 
-                v.lang.includes('pt') && 
-                (v.name.includes('Daniel') || v.name.includes('Felipe') || v.name.includes('Luciano'))
+                (v.lang.includes('pt-BR') || v.lang.includes('pt_BR')) && 
+                (v.name.includes('Google') || v.name.includes('Daniel'))
             );
 
             if (maleVoice) {
                 utterance.voice = maleVoice;
-                utterance.pitch = 0.9; // Levemente grave
+                utterance.pitch = 0.6; // Voz grossa
+                utterance.rate = 1.1; 
             } else {
-                // FALLBACK: Se só tiver a voz feminina do Google
-                // Pitch 0.5 fica robô. Pitch 0.7/0.8 é o "ponto doce" para parecer homem sem distorcer.
-                utterance.pitch = 0.75; 
+                utterance.pitch = 0.5; 
             }
-            
-            utterance.rate = 1.1; // Ritmo mais dinâmico
             
             utterance.onstart = () => { isSpeaking = true; videoEl.play(); };
             utterance.onend = () => { 
@@ -314,7 +297,7 @@
             micBtn.addEventListener('click', () => {
                 if (micBtn.classList.contains('listening')) { recognition.stop(); micBtn.classList.remove('listening'); }
                 else { 
-                    synthesis.cancel();
+                    synthesis.cancel(); 
                     recognition.start(); 
                     micBtn.classList.add('listening'); 
                     userInput.placeholder = "Ouvindo..."; 
