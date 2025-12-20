@@ -12,14 +12,13 @@
     <link href="https://cdn.jsdelivr.net/npm/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
 
     <style>
-        /* CORREÇÃO 1: Garante que o fundo da página e do canvas sejam transparentes para ver a câmera */
+        /* Fundo transparente para AR funcionar */
         html, body { 
             margin: 0; padding: 0; width: 100%; height: 100%; 
             overflow: hidden; background-color: transparent !important; 
             font-family: 'Roboto', sans-serif; 
         }
         
-        /* Garante que o canvas do A-Frame não tenha fundo preto */
         canvas.a-canvas {
             background-color: transparent !important;
             opacity: 1 !important;
@@ -33,7 +32,6 @@
 
         .chat-container {
             pointer-events: auto;
-            /* Fundo gradiente leve para leitura, mas permitindo ver a câmera atrás */
             background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(179, 0, 0, 0.6) 100%);
             padding: 15px; display: flex; flex-direction: column; gap: 10px;
             padding-bottom: 30px; border-top: 2px solid #ffcc00;
@@ -101,7 +99,7 @@
             <div id="chat-display"></div>
             <div class="controls">
                 <button id="micBtn" class="icon-btn"><i class='bx bxs-microphone'></i></button>
-                <input type="text" id="userInput" placeholder="Tente adivinhar..." autocomplete="off">
+                <input type="text" id="userInput" placeholder="Quem será? Pergunte..." autocomplete="off">
                 <button id="sendBtn" class="icon-btn"><i class='bx bxs-send'></i></button>
             </div>
         </div>
@@ -126,21 +124,30 @@
 
     <script>
         // ==================================================================================
-        // CONFIGURAÇÃO DO AMIGO SECRETO (PREENCHA ESTES DADOS!)
+        // DADOS DO AMIGO SECRETO (ALVARO) E DOS "CONFUNDIDORES"
         // ==================================================================================
         const CONFIG_AMIGO = {
             nome: "Alvaro",
-            cargo: "vovô",
-            dica_visual_1: "careca, flamenguista",
-            dica_comportamento: "reclamar, beber cerveja",
-            hobby: "churrasco e caminhar",
-            frase_famosa: "Palmeiras não tem mundial ou essa cerveja é de agudos?",
-            presente_ideal: "short para caminhada"
+            apelido: "Vovô Alvaro",
+            perfil: "Carioca, malandro (no bom sentido), um dos melhores vendedores que já vi, inteligente, mas se acomoda fácil.",
+            visual: "Careca, flamenguista.",
+            comportamento: "Gosta de reclamar e beber cerveja.",
+            hobby: "Fazer churrasco e caminhar.",
+            frase_famosa: "'Palmeiras não tem mundial' ou 'Essa cerveja é de Agudos?'",
+            presente_ideal: "Short para caminhada"
         };
-        // ==================================================================================
 
+        const OUTROS_PERSONAGENS = `
+        USE ESTAS PESSOAS PARA CONFUNDIR O USUÁRIO (NÃO SÃO O AMIGO SECRETO, MAS USE COMO DISTRAÇÃO):
+        1. Thamis (Esposa): Brava, inteligente, gerente do Kumon, corre na rua mas adora um 'barranco' e se acomoda fácil.
+        2. Teresa (Sogra): Brava, Porto Seguro da família, aposentada, inteligente, mas precisa sair do sofá.
+        3. Samir (Cunhado): O tesouro, caçula, inteligente, pesquisador.
+        4. Michelle (Cunhada): Brava, trabalhadora, filha mais velha, repórter inteligente.
+        5. Marcelo (Concunhado): Palmeirense (igual o Thiago), tranquilo, repórter inteligente.
+        6. Otto (Sobrinho): Criança, maleta, opinião forte, vai botar a família no bolso.
+        `;
 
-        // CHAVES ORIGINAIS
+        // CHAVES API
         const KEY_PARTE_1 = "AIzaSyAfx1aiuP9jWzGDoh"; 
         const KEY_PARTE_2 = "E6KxZ6_68wZkt27VI";
         const GEMINI_API_KEY = KEY_PARTE_1 + KEY_PARTE_2;
@@ -152,46 +159,58 @@
         const sendBtn = document.getElementById('sendBtn');
         const micBtn = document.getElementById('micBtn');
         const scanOverlay = document.getElementById('scan-overlay');
-        const uiLayer = document.getElementById('ui-layer');
 
         let isSpeaking = false;
         let synthesis = window.speechSynthesis;
         let voices = [];
         let chatHistory = [];
-        let interactionCount = 0; // Contador para controlar a enrolação
+        let interactionCount = 0; 
 
-        // PROMPT DO ESPECIALISTA EM ENROLAÇÃO
+        // ==========================================================
+        // O CÉREBRO DO THIAGUINHO (COM PEGADINHAS)
+        // ==========================================================
         function buildSystemPrompt() {
             return `
-            Você é o 'thIAguinho Noel', uma IA zoeira e cheia de mistério em uma festa de Amigo Secreto.
+            Você é o 'thIAguinho Noel', uma IA zoeira, irônica e enrolona numa festa de família.
             
-            O AMIGO SECRETO É: ${CONFIG_AMIGO.nome}.
-            DADOS REAIS SOBRE ELE(A):
-            - Cargo: ${CONFIG_AMIGO.cargo}
-            - Visual: ${CONFIG_AMIGO.dica_visual_1}
-            - Mania: ${CONFIG_AMIGO.dica_comportamento}
+            O AMIGO SECRETO É: ${CONFIG_AMIGO.nome} (${CONFIG_AMIGO.apelido}).
+            CARACTERÍSTICAS REAIS DELE:
+            - ${CONFIG_AMIGO.perfil}
+            - Visual: ${CONFIG_AMIGO.visual}
+            - Mania: ${CONFIG_AMIGO.comportamento}
             - Hobby: ${CONFIG_AMIGO.hobby}
             - Frase: "${CONFIG_AMIGO.frase_famosa}"
+            - Presente: ${CONFIG_AMIGO.presente_ideal}
 
-            SUA MISSÃO: 
-            Os convidados vão fazer perguntas para tentar descobrir quem é.
-            VOCÊ DEVE ENROLAR AO MÁXIMO! SEJA ENGRAÇADO, DÊ PISTAS VAGAS E NÃO ENTREGUE O NOME FACILMENTE.
+            ${OUTROS_PERSONAGENS}
 
-            REGRAS DE COMPORTAMENTO:
-            1. Estamos na pergunta número: {INTERACTION_COUNT}.
-            2. Se {INTERACTION_COUNT} for menor que 5: NEGUE TUDO. Faça piadas. Diga "Minha bola de cristal tá embaçada" ou "O Papai Noel proibiu contar cedo".
-            3. Se {INTERACTION_COUNT} for entre 5 e 10: Comece a soltar as dicas de 'Visual' ou 'Mania', mas sempre com humor ácido.
-            4. Se {INTERACTION_COUNT} for maior que 10: Pode começar a deixar fácil.
-            5. NUNCA revele o nome exato antes da pergunta número 10, a menos que o usuário acerte o nome explicitamente. Se ele acertar o nome, faça festa e confirme: "ACERTOU MIZERAVI! É o ${CONFIG_AMIGO.nome} mesmo!".
-            6. Respostas curtas! Máximo 2 frases. Fale como um apresentador de auditório animado.
+            SUA MISSÃO: ENROLAR AO MÁXIMO E FAZER PEGADINHAS!
+            Você sabe quem é, mas não pode contar fácil.
 
-            Se perguntarem o que ele quer de presente, diga: "Talvez ${CONFIG_AMIGO.presente_ideal}, mas quem sabe um par de meias?".
+            REGRAS DE INTERAÇÃO (Estamos na pergunta nº: {INTERACTION_COUNT}):
+
+            1. FASE 'CONFUSÃO TOTAL' (Perguntas 1 a 6):
+               - NEGUE TUDO. Se perguntarem "É o Alvaro?", minta! Diga: "O Alvaro? Aquele que reclama da cerveja? Não... acho que não".
+               - Use os OUTROS personagens para despistar. 
+                 Exemplo: Se perguntarem "É inteligente?", diga: "Ih, aqui todo mundo é inteligente! O Samir é pesquisador, a Michelle é repórter... pode ser qualquer um!".
+                 Exemplo: Se perguntarem "É bravo?", diga: "Bravo? Tem a Thamis, a Teresa, a Michelle... aqui o que não falta é gente brava!".
+               - Se perguntarem de futebol, zoe o Palmeiras do Marcelo e do Thiago, mas lembre que o Alvaro é Flamenguista.
+
+            2. FASE 'DICAS VAGAS' (Perguntas 7 a 12):
+               - Comece a soltar dicas que servem para o Alvaro mas parecem com outros.
+               - Ex: "Ele gosta de se acomodar... tipo a Thamis, mas ele reclama mais".
+               - Ex: "Ele é carioca e malandro".
+
+            3. FASE 'REVELAÇÃO' (A partir da pergunta 13):
+               - Agora sim, se acertarem, confirme com festa: "ACERTOU!! É O VOVÔ ALVARO! O rei do churrasco e da reclamação de cerveja!".
+
+            Mantenha o tom engraçado, provoque o Otto (chame de maleta), zoe o Palmeiras do Marcelo. Seja o tiozão da festa.
             `;
         }
 
-        // Inicializa Histórico
-        chatHistory.push({ role: "model", parts: [{ text: "Ho Ho Ho! Eu sei quem é o amigo secreto! Duvido vocês adivinharem. Podem perguntar!" }] });
-        addMessage("thIAguinho", "Ho Ho Ho! Eu sei quem é o amigo secreto! Duvido vocês adivinharem. Podem perguntar!", "msg-ai");
+        // Histórico Inicial
+        chatHistory.push({ role: "model", parts: [{ text: "Ho Ho Ho! Eu sei quem é! Tem gente brava, gente inteligente e gente folgada nessa lista... Duvido vocês adivinharem!" }] });
+        addMessage("thIAguinho", "Ho Ho Ho! Eu sei quem é! Tem gente brava, gente inteligente e gente folgada nessa lista... Duvido vocês adivinharem!", "msg-ai");
 
         function loadVoices() {
             voices = synthesis.getVoices();
@@ -202,29 +221,23 @@
         // AR Events
         targetEntity.addEventListener("targetFound", () => {
             scanOverlay.classList.add('hidden');
-            // CORREÇÃO 2: uiLayer já está visível, então apenas damos play no vídeo
             videoEl.play();
         });
-        
         targetEntity.addEventListener("targetLost", () => {
             scanOverlay.classList.remove('hidden');
-            // CORREÇÃO 2: Não escondemos mais o uiLayer (chat) quando perde o alvo
-            // uiLayer.classList.add('hidden'); <--- REMOVIDO
             videoEl.pause();
             synthesis.cancel();
         });
 
-        // IA + VOZ
+        // IA
         async function askGemini(text) {
             if(!text.trim()) return;
-            addMessage("Convidado", text, "msg-user");
+            addMessage("Você", text, "msg-user");
             userInput.value = "";
             
-            // Atualiza prompt com contador
             interactionCount++;
             let currentPrompt = buildSystemPrompt().replace("{INTERACTION_COUNT}", interactionCount);
             
-            // Monta payload
             let contents = [
                 { role: "user", parts: [{ text: currentPrompt }] }, 
                 ...chatHistory.slice(-10), 
@@ -237,17 +250,15 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
                         contents: contents, 
-                        generationConfig: { temperature: 1.3 } 
+                        generationConfig: { temperature: 1.5 } // Temperatura alta para criatividade máxima
                     })
                 });
                 const data = await response.json();
-                
-                let aiText = "Ho ho ho... o sinal do Polo Norte caiu.";
+                let aiText = "Ho ho ho... minha conexão com o Polo Norte falhou.";
                 if (data.candidates && data.candidates[0].content) {
                     aiText = data.candidates[0].content.parts[0].text;
                 }
 
-                // Salva no histórico
                 chatHistory.push({ role: "user", parts: [{ text: text }] });
                 chatHistory.push({ role: "model", parts: [{ text: aiText }] });
                 
@@ -256,18 +267,16 @@
 
             } catch (error) {
                 console.error(error);
-                addMessage("Sistema", "Erro de conexão com o Polo Norte.", "msg-ai");
+                addMessage("Sistema", "Erro de conexão.", "msg-ai");
             }
         }
 
-        // VOZ MASCULINA
+        // Voz
         function speakMaleVoice(text) {
             synthesis.cancel();
             const utterance = new SpeechSynthesisUtterance(text);
-            
             if(voices.length === 0) loadVoices();
             
-            // Busca voz masculina grave
             const maleVoice = voices.find(v => 
                 (v.lang.includes('pt-BR') || v.lang.includes('pt_BR')) && 
                 (v.name.includes('Google') || v.name.includes('Daniel'))
@@ -275,21 +284,18 @@
 
             if (maleVoice) {
                 utterance.voice = maleVoice;
-                utterance.pitch = 0.6; // Voz grossa
+                utterance.pitch = 0.6; 
                 utterance.rate = 1.1; 
             } else {
                 utterance.pitch = 0.5; 
             }
             
             utterance.onstart = () => { isSpeaking = true; videoEl.play(); };
-            utterance.onend = () => { 
-                isSpeaking = false; 
-                videoEl.pause(); 
-            };
+            utterance.onend = () => { isSpeaking = false; videoEl.pause(); };
             synthesis.speak(utterance);
         }
 
-        // MIC
+        // Reconhecimento de Voz
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (SpeechRecognition) {
             const recognition = new SpeechRecognition();
