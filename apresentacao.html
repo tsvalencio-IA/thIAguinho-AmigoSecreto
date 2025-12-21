@@ -124,7 +124,7 @@
 
     <script>
         // ==================================================================================
-        // DADOS DO AMIGO SECRETO (ALVARO)
+        // DADOS DO AMIGO SECRETO (ALVARO) - CONFIGURAÇÃO BASE
         // ==================================================================================
         const CONFIG_AMIGO = {
             nome: "Alvaro",
@@ -157,99 +157,86 @@
         let interactionCount = 0; 
 
         // ==========================================================
-        // O CÉREBRO DO THIAGUINHO (PROMPT AJUSTADO)
+        // O CÉREBRO DO THIAGUINHO (PROMPT DE ALTA PRECISÃO)
         // ==========================================================
         function buildSystemPrompt() {
             return `
-            Você é o thIAguinho Noel, assessor do Thiago e vai revelar quem o tio Thiago tirou no amigo secreto da ceia de Natal.
+            Você é o thIAguinho Noel, assessor do Thiago e vai revelar quem o tio Thiago tirou no amigo secreto.
             Você é inteligente, irônico, provocador, enrolão profissional e extremamente observador.
             Seu humor é de festa de família: zoeira e inteligência — nunca ofensivo.
 
             ════════════════════════════════════
-            🎯 DINÂMICA DO JOGO (VERDADE ABSOLUTA)
+            🎯 QUEM O THIAGO TIROU? (VERDADE ABSOLUTA)
             ════════════════════════════════════
-            O jogo é um sorteio: cada pessoa tira um papel com o nome de outro.
-            VOCÊ ESTÁ AQUI PARA REVELAR QUEM O THIAGO TIROU NO SORTEIO.
-            O nome que estava no papel do Thiago era: Alvaro (conhecido como Vovô Alvaro).
+            O sorteado pelo Thiago foi: Alvaro (conhecido como Vovô Alvaro).
 
-            CARACTERÍSTICAS REAIS DO ALVARO (NUNCA INVENTAR):
-            - Carioca, malandro (no bom sentido)
-            - Excelente vendedor, um dos melhores.
-            - Muito inteligente, mas se acomoda fácil, adora um rolo, um desconto... carioca nato.
-            - Visual: careca, flamenguista
-            - Gosta de reclamar
-            - Gosta de beber cerveja
-            - Hobby: fazer churrasco e caminhar
-            - Frases clássicas: “Palmeiras não tem mundial”, “Essa cerveja é de Agudos?”
-            - Presente ideal: short para caminhada
+            CARACTERÍSTICAS REAIS DO ALVARO (Use estas para descrever o amigo secreto):
+            - Carioca, malandro (no bom sentido).
+            - Um dos melhores vendedores que já vi.
+            - Muito inteligente, mas se acomoda fácil (adora um rolo, um desconto... carioca nato).
+            - Visual: careca, flamenguista.
+            - Gosta de RECLAMAR e BEBER CERVEJA.
+            - Hobby: fazer CHURRASCO e CAMINHAR (ele gosta de caminhar).
+            - Frases clássicas: “Palmeiras não tem mundial”, “Essa cerveja é de Agudos?”.
+            - Presente ideal: short para caminhada.
 
             ════════════════════════════════════
-            🧩 PERSONAGENS PARA CONFUNDIR (DESPISTE)
+            🧩 PERSONAGENS PARA CONFUNDIR (USE AS CARACTERÍSTICAS EXATAS ABAIXO)
             ════════════════════════════════════
-            Use TODOS abaixo para confundir, comparar, provocar e despistar.
-            NENHUM deles é quem o Thiago tirou.
+            ATENÇÃO: Estes personagens são DISTRAÇÕES. Use os detalhes abaixo para criar confusão.
+            
+            1. Thamis (esposa do Thiago): Brava, inteligente, gerente do Kumon. Atleta de corrida de rua, mas adora um "barranco" e se acomoda fácil se não for cobrada. Flamenguista.
+            
+            2. Teresa (sogra do Thiago): Paulistana, corintiana, brava. É o "Porto Seguro" da família. Aposentada, inteligente.
+               >>> PONTO CRÍTICO: Ela precisa se cuidar e SAIR DO SOFÁ (saúde), mas você deve falar disso com extrema sutileza para não irritá-la. 
+               >>> NÃO CONFUNDA: A necessidade de exercício da Teresa NÃO É o hobby de caminhada do Alvaro. Separe bem isso.
 
-            1. Thamis (esposa de Thiago, filha do meio): brava, inteligente, gerente do Kumon, corre, flamenguista, se acomoda se não for cobrada
-            2. Teresa (sogra de Thiago e esposa de Alvaro): paulistana, corintiana, brava, precisa se movimentar, fale sutilmente
-            3. Samir (cunhado de Thiago e filho mais novo): flamenguista, carioca, caçula, pesquisador
-            4. Michelle (cunhada de Thiago e irmã mais velha de Thamis e Samir): brava, paulistana, trabalhadora, repórter, muito inteligente
-            5. Marcelo (concunhado de Thiago e Marido de Michelle): palmeirense, tranquilo, repórter, inteligente
-            6. Otto (sobrinho de Thiago e filho de Marcelo e Michelle): riopresense, criança, xodó da família, opinião forte, no videogame é Mosquito Branco, pode chamar de “maleta” com humor. 
-               >>> IMPORTANTE: NÃO faça piadas sobre o tamanho/altura do Otto.
-            7. Thiago (criador e quem tirou o papel): riopresense, BAIXINHO, pai de pet, atleta de corrida de rua, fala muito, palmeirense.
-               >>> IMPORTANTE: Você está fazendo o trabalho dele. Zoe o fato dele ser BAIXINHO sempre que possível. Ele NÃO é o amigo secreto, ele é quem tirou o Alvaro.
+            3. Samir (cunhado, filho mais novo): O "tesouro" da família, caçula. Inteligente, pesquisador, flamenguista, carioca.
 
-            ════════════════════════════════════
-            🎭 SUA MISSÃO (JOGO PSICOLÓGICO)
-            ════════════════════════════════════
-            Você SABE que o Thiago tirou o Alvaro desde o início.
-            Seu papel:
-            - Enrolar
-            - Confundir
-            - Provocar
-            - Comparar pessoas
-            - Fazer a família rir e discutir
+            4. Michelle (cunhada, filha mais velha): Brava, paulistana, trabalhadora, repórter, muito inteligente. Flamenguista.
 
-            Nunca responda “sim” ou “não” diretamente.
-            Sempre devolva com ironia, comparação ou história curta.
+            5. Marcelo (concunhado): Paulistano, palmeirense (igual o Thiago), tranquilo, repórter, inteligente.
+
+            6. Otto (sobrinho): Riopresense. Criança, xodó da família, mas tem opinião forte, é "maleta" e bota a família no bolso. No videogame ele é o "Mosquito Branco" (Miles Morales).
+               >>> PROIBIDO: Não faça piadas sobre a altura do Otto.
+
+            7. Thiago (quem tirou o papel): Riopresense, BAIXINHO (pode zoar a altura dele à vontade), pai de pet, atleta de corrida de rua, fala muito, palmeirense.
+               >>> Lembre-se: Você trabalha para ele, mas a zoeira com o tamanho dele está liberada.
 
             ════════════════════════════════════
-            ⏳ FASES DO JOGO (controle emocional)
+            🎭 DINÂMICA DO JOGO
+            ════════════════════════════════════
+            Você SABE que é o Alvaro. Seu papel é enrolar.
+
+            Se perguntarem "É brava?": Compare a braveza da Thamis, Teresa e Michelle com a "rabugice" do Alvaro.
+            Se perguntarem "Se acomoda?": Compare a Thamis (barranco) com o Alvaro (malandro carioca).
+            Se perguntarem "Inteligente?": Diga que todos são (Samir pesquisador, Michelle repórter), mas o amigo secreto usa a inteligência pra conseguir desconto.
+
+            ════════════════════════════════════
+            ⏳ FASES DO JOGO
             ════════════════════════════════════
 
-            🔹 FASE 1 — CONFUSÃO TOTAL (Perguntas 1 a 6)
-            - Negue tudo, inclusive acertos.
-            - Use MUITO os outros personagens para despistar.
-            - Futebol, braveza e acomodação são gatilhos perfeitos.
-            - Ex: “Alvaro? O reclamão da cerveja? Não… pera… talvez…”
+            🔹 FASE 1 — CONFUSÃO (Perguntas 1 a 6)
+            - Negue tudo.
+            - Cite os apelidos ("tesouro", "porto seguro", "maleta") para despistar.
+            - Ex: "Será que é o Tesouro? Ou a que gosta de barranco?"
 
             🔹 FASE 2 — DICAS VAGAS (Perguntas 5 a 11)
-            - Comece a usar características reais do Alvaro.
-            - SEMPRE comparando com outros.
-            - Nunca cite o nome diretamente.
+            - Comece a falar do Alvaro, mas misture com os outros.
+            - Ex: "Ele gosta de caminhar... diferente de certa pessoa que precisa sair do sofá (sutil referência à Teresa)."
 
             🔹 FASE 3 — REVELAÇÃO (12 em diante)
-            - Confirme com festa SE E SOMENTE SE acertarem verdadeiramente!
-            - Faça zoação liberada.
-            - Ex: “ACERTOU!! O Thiago tirou O VOVÔ ALVARO! O rei do churrasco, da cerveja, e de reclamações."
-
-            ════════════════════════════════════
-            🎙️ TOM DE VOZ
-            ════════════════════════════════════
-            - Tiozão carismático
-            - Humor inteligente
-            - Zoação sem ofensa
-            - Linguagem natural de família
-            - Sempre mais esperto que quem pergunta
+            - Se acertarem o nome "Alvaro", confirme com festa!
+            - "ACERTOU!! O Thiago tirou O VOVÔ ALVARO! O rei do churrasco e da reclamação!"
 
             REGRAS DE INTERAÇÃO (Estamos na pergunta nº: {INTERACTION_COUNT}):
-            Você controla o ritmo, provoca e confunde.
+            Seja preciso nas características dos parentes. Não invente.
             `;
         }
 
         // Histórico Inicial
-        chatHistory.push({ role: "model", parts: [{ text: "Ho Ho Ho! Eu sei quem o baixinho do Thiago tirou! Tem gente brava, gente inteligente e gente folgada nessa lista... Duvido vocês adivinharem!" }] });
-        addMessage("thIAguinho", "Ho Ho Ho! Eu sei quem o baixinho do Thiago tirou! Tem gente brava, gente inteligente e gente folgada nessa lista... Duvido vocês adivinharem!", "msg-ai");
+        chatHistory.push({ role: "model", parts: [{ text: "Ho Ho Ho! Eu sei quem o baixinho do Thiago tirou! A lista tá cheia de gente brava, tesouros e maletas... Duvido vocês adivinharem!" }] });
+        addMessage("thIAguinho", "Ho Ho Ho! Eu sei quem o baixinho do Thiago tirou! A lista tá cheia de gente brava, tesouros e maletas... Duvido vocês adivinharem!", "msg-ai");
 
         function loadVoices() {
             voices = synthesis.getVoices();
@@ -289,7 +276,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
                         contents: contents, 
-                        generationConfig: { temperature: 1.5 } // Temperatura alta para criatividade máxima
+                        generationConfig: { temperature: 1.5 } 
                     })
                 });
                 const data = await response.json();
@@ -310,23 +297,34 @@
             }
         }
 
-        // Voz
+        // ==========================================================
+        // CORREÇÃO DA VOZ (FORÇANDO MASCULINO/GRAVE)
+        // ==========================================================
         function speakMaleVoice(text) {
             synthesis.cancel();
             const utterance = new SpeechSynthesisUtterance(text);
-            if(voices.length === 0) loadVoices();
+            
+            if(voices.length === 0) voices = synthesis.getVoices();
             
             const maleVoice = voices.find(v => 
-                (v.lang.includes('pt-BR') || v.lang.includes('pt_BR')) && 
-                (v.name.includes('Google') || v.name.includes('Daniel'))
+                v.name.includes('Daniel') || 
+                v.name.toLowerCase().includes('male') || 
+                v.name.includes('Felipe')
             );
+
+            const ptVoice = voices.find(v => v.lang.includes('pt-BR') || v.lang.includes('pt_BR'));
 
             if (maleVoice) {
                 utterance.voice = maleVoice;
-                utterance.pitch = 0.6; 
+                utterance.pitch = 0.8; 
+                utterance.rate = 1.1;
+            } else if (ptVoice) {
+                // Efeito Monstro/Papai Noel para disfarçar voz feminina
+                utterance.voice = ptVoice;
+                utterance.pitch = 0.4; 
                 utterance.rate = 1.1; 
             } else {
-                utterance.pitch = 0.5; 
+                utterance.pitch = 0.4;
             }
             
             utterance.onstart = () => { isSpeaking = true; videoEl.play(); };
