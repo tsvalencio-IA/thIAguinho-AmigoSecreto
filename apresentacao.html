@@ -288,31 +288,24 @@
         // ==========================================================
         // CORREÇÃO DA VOZ (GRAVE - EFEITO PAPAI NOEL)
         // ==========================================================
-        function speakMaleVoice(text) {
+         = 
+
+ function speakMaleVoice(text) {
             synthesis.cancel();
             const utterance = new SpeechSynthesisUtterance(text);
             
             if(voices.length === 0) voices = synthesis.getVoices();
             
-            const maleVoice = voices.find(v => 
-                v.name.includes('Daniel') || 
-                v.name.toLowerCase().includes('male') || 
-                v.name.includes('Felipe')
-            );
-
             const ptVoice = voices.find(v => v.lang.includes('pt-BR') || v.lang.includes('pt_BR'));
 
-            if (maleVoice) {
-                utterance.voice = maleVoice;
-                utterance.pitch = 0.8; 
-                utterance.rate = 1.1;
-            } else if (ptVoice) {
-                // EFEITO DE VOZ GROSSA PARA DISFARÇAR A GOOGLE FEMININA
+            if (ptVoice) {
                 utterance.voice = ptVoice;
-                utterance.pitch = 0.4; 
-                utterance.rate = 1.1; 
+                // AQUI ESTÁ A MÁGICA PARA TIRAR A VOZ FEMININA A FORÇA:
+                utterance.pitch = 0.1; // Tom super grave (quase monstro)
+                utterance.rate = 0.9;  // Fala mais lenta para reforçar o grave
             } else {
-                utterance.pitch = 0.4;
+                utterance.pitch = 0.1;
+                utterance.rate = 0.9;
             }
             
             utterance.onstart = () => { isSpeaking = true; videoEl.play(); };
