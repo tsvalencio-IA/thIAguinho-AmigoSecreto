@@ -1,440 +1,370 @@
-<!DOCTYPE html>  <html lang="pt-BR">  
-<head>  
-    <meta charset="UTF-8">  
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">  
-    <title>Apresentação Amigo Secreto</title>  <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>  
-<script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>  
-  
-<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">  
-<link href="https://cdn.jsdelivr.net/npm/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">  
-
-<style>  
-    html, body {   
-        margin: 0; padding: 0; width: 100%; height: 100%;   
-        overflow: hidden; background-color: transparent !important;   
-        font-family: 'Roboto', sans-serif;   
-    }  
-      
-    canvas.a-canvas {  
-        background-color: transparent !important;  
-        opacity: 1 !important;  
-    }  
-
-    #ui-layer {  
-        position: fixed; bottom: 0; left: 0; width: 100%; height: 100%;  
-        pointer-events: none; display: flex; flex-direction: column;  
-        justify-content: flex-end; z-index: 10000;  
-    }  
-
-    .chat-container {  
-        pointer-events: auto;  
-        background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(179, 0, 0, 0.6) 100%);  
-        padding: 15px; display: flex; flex-direction: column; gap: 10px;  
-        padding-bottom: 30px; border-top: 2px solid #ffcc00;  
-    }  
-
-    #chat-display {  
-        max-height: 35vh; overflow-y: auto; color: white;  
-        text-shadow: 1px 1px 2px black; margin-bottom: 10px; font-size: 14px;  
-    }  
-
-    .msg {  
-        margin-bottom: 8px; padding: 10px 14px; border-radius: 12px;  
-        line-height: 1.4; max-width: 90%; word-wrap: break-word;  
-    }  
-    .msg-user { background-color: rgba(255, 255, 255, 0.9); color: black; align-self: flex-end; margin-left: auto; border-bottom-right-radius: 2px; }  
-    .msg-ai { background-color: rgba(204, 0, 0, 0.9); color: white; align-self: flex-start; margin-right: auto; border-bottom-left-radius: 2px; border: 1px solid #ffcc00; }  
-
-    .controls { display: flex; gap: 8px; align-items: center; }  
-
-    input {  
-        flex-grow: 1; padding: 14px; border-radius: 30px; border: none; outline: none;  
-        background: rgba(255, 255, 255, 0.95); font-size: 16px; color: #000;  
-    }  
-
-    .icon-btn {  
-        width: 50px; height: 50px; border-radius: 50%; border: none;  
-        display: flex; align-items: center; justify-content: center;  
-        cursor: pointer; font-size: 24px; color: white; transition: 0.2s;  
-        box-shadow: 0 4px 6px rgba(0,0,0,0.3);  
-    }  
-    #micBtn { background-color: #333; border: 2px solid white; }  
-    #micBtn.listening { background-color: #ffcc00; color: #cc0000; animation: pulse 1s infinite; border-color: #cc0000; }  
-    #sendBtn { background-color: #cc0000; border: 2px solid #ffcc00; }  
-
-    #scan-overlay {  
-        position: fixed; top: 40%; left: 50%; transform: translate(-50%, -50%);  
-        text-align: center; z-index: 5000; pointer-events: none;  
-    }  
-    .scan-box {  
-        width: 70vw; height: 70vw; max-width: 300px; max-height: 300px;  
-        border: 4px solid rgba(255, 204, 0, 0.9); border-radius: 20px;  
-        box-shadow: 0 0 30px rgba(204, 0, 0, 0.8);  
-        animation: breathe 2s infinite alternate;  
-    }  
-    .scan-text {  
-        color: #ffcc00; margin-top: 20px; font-weight: bold; font-size: 18px;  
-        background: rgba(0,0,0,0.8); padding: 8px 16px; border-radius: 8px; display: inline-block;  
-    }  
-    .hidden { display: none !important; }  
-    @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }  
-    @keyframes breathe { from { box-shadow: 0 0 10px rgba(255,204,0,0.5); } to { box-shadow: 0 0 30px rgba(255,204,0,1); } }  
-</style>
-
-</head>  
-<body>  <button onclick="window.location.href='index.html'" style="position: fixed; top: 20px; left: 20px; z-index: 10001; background: rgba(0,0,0,0.5); border: none; color: white; width: 40px; height: 40px; border-radius: 50%; font-size: 24px; cursor: pointer;"><i class='bx bx-arrow-back'></i></button>  
-
-<div id="scan-overlay">  
-    <div class="scan-box"></div>  
-    <div class="scan-text">PROCURANDO ALVO...</div>  
-</div>  
-
-<div id="ui-layer">  
-    <div class="chat-container">  
-        <div id="chat-display"></div>  
-        <div class="controls">  
-            <button id="micBtn" class="icon-btn"><i class='bx bxs-microphone'></i></button>  
-            <input type="text" id="userInput" placeholder="Quem será? Pergunte..." autocomplete="off">  
-            <button id="sendBtn" class="icon-btn"><i class='bx bxs-send'></i></button>  
-        </div>  
-    </div>  
-</div>  
-
-<a-scene mindar-image="imageTargetSrc: ./assets/targets.mind; uiScanning: no; filterMinCF:0.0001; filterBeta: 0.001"   
-         color-space="sRGB"   
-         renderer="colorManagement: true, physicallyCorrectLights, alpha: true"   
-         vr-mode-ui="enabled: false"   
-         device-orientation-permission-ui="enabled: false">  
-      
-    <a-assets>  
-        <video id="mascoteVideo" src="./assets/mascote.mp4" preload="auto" loop="true" crossorigin="anonymous" playsinline webkit-playsinline muted></video>  
-    </a-assets>  
-
-    <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>  
-
-    <a-entity mindar-image-target="targetIndex: 0" id="target-entity">  
-        <a-plane src="#mascoteVideo" position="0 0 0" height="1.6" width="1" rotation="0 0 0" material="shader: flat; alphaTest: 0.5; transparent: true"></a-plane>  
-    </a-entity>  
-</a-scene>  
-
-<script>  
-    const CONFIG_AMIGO = {  
-        nome: "Alvaro",  
-        apelido: "Vovô Alvaro",  
-        perfil: "Carioca, malandro (no bom sentido), um dos melhores vendedores que já vi, inteligente, mas se acomoda fácil.",  
-        visual: "Careca, flamenguista.",  
-        comportamento: "Gosta de reclamar e beber cerveja.",  
-        hobby: "Fazer churrasco e caminhar.",  
-        frase_famosa: "'Palmeiras não tem mundial' ou 'Essa cerveja é de Agudos?'",  
-        presente_ideal: "Short para caminhada"  
-    };  
-
-    const OUTROS_PERSONAGENS = `  
-    USE ESTAS PESSOAS PARA CONFUNDIR O USUÁRIO (NÃO SÃO O AMIGO SECRETO, MAS USE COMO DISTRAÇÃO):  
-    1. Thamis (Esposa): Brava, inteligente, gerente do Kumon, pratica corrida de rua, flamenguista, ótima pessoa, mas se acomoda se não for cobrada.  
-    2. Teresa (Sogra): paulistana, corintiana, Brava, aposentada, inteligente, precisa sair do sofá, fale disso sutilmente.  
-    3. Samir (Cunhado): flamenguista , carioca, caçula, inteligente, pesquisador.  
-    4. Michelle (Cunhada): Brava, paulistana, trabalhadora, filha mais velha, repórter inteligente, flamenguista.  
-    5. Marcelo (Concunhado): Paulistano, Palmeirense, tranquilo, repórter e  inteligente.  
-    6. Otto (Sobrinho): riopresense, criança, xodó da família, opinião forte, no videogame é o Mosquito Branco, pode chamar de “maleta”.  
-    7. Thiago (eu mesmo): riopresense, palmeirense, você está fazendo o trabalho dele, zoe-o sempre que possível.  
-    `;  
-
-    const KEY_PARTE_1 = "AIzaSyAfx1aiuP9jWzGDoh";   
-    const KEY_PARTE_2 = "E6KxZ6_68wZkt27VI";  
-    const GEMINI_API_KEY = KEY_PARTE_1 + KEY_PARTE_2;  
-
-    const videoEl = document.querySelector('#mascoteVideo');  
-    const targetEntity = document.querySelector('#target-entity');  
-    const chatDisplay = document.getElementById('chat-display');  
-    const userInput = document.getElementById('userInput');  
-    const sendBtn = document.getElementById('sendBtn');  
-    const micBtn = document.getElementById('micBtn');  
-    const scanOverlay = document.getElementById('scan-overlay');  
-
-    let isSpeaking = false;  
-    let synthesis = window.speechSynthesis;  
-    let voices = [];  
-    let chatHistory = [];  
-    let interactionCount = 0;   
-
-    // =================================================================  
-    // BUILD SYSTEM PROMPT (NOVO, COM EMOÇÃO, FASES E PERSONAGENS)  
-    // =================================================================  
-    function buildSystemPrompt() {  
-        return `
-
-Você é o thIAguinho Noel, assessor do Thiago e o tio mais perigoso da ceia de Natal.
-Você é inteligente, irônico, provocador, enrolão profissional e extremamente observador.
-Seu humor é de festa de família: zoeira, malícia e inteligência — nunca ofensivo.
-
-════════════════════════════════════
-🎯 AMIGO SECRETO (VERDADE ABSOLUTA)
-════════════════════════════════════
-O amigo secreto é Alvaro, conhecido como Vovô Alvaro.
-
-CARACTERÍSTICAS REAIS (NUNCA INVENTAR):
-
-Carioca, malandro (no bom sentido)
-
-Um dos melhores vendedores que já vi
-
-Muito inteligente, mas se acomoda fácil
-
-Visual: careca, flamenguista
-
-Gosta de reclamar
-
-Gosta de beber cerveja
-
-Hobby: fazer churrasco e caminhar
-
-Frases clássicas:
-“Palmeiras não tem mundial”
-“Essa cerveja é de Agudos?”
-
-Presente ideal: short para caminhada
-
-
-════════════════════════════════════
-🧩 PERSONAGENS PARA CONFUNDIR (DESPISTE)
-════════════════════════════════════
-${OUTROS_PERSONAGENS}
-
-════════════════════════════════════
-🎭 SUA MISSÃO (JOGO PSICOLÓGICO)
-════════════════════════════════════
-Você SABE quem é o amigo secreto desde o início.
-Seu papel é:
-
-Enrolar
-
-Confundir
-
-Provocar
-
-Comparar pessoas
-
-Fazer a família rir e discutir
-
-
-Nunca responda “sim” ou “não” diretamente.
-Sempre devolva com ironia, comparação ou história curta.
-
-════════════════════════════════════
-⏳ FASES DO JOGO (controle emocional)
-════════════════════════════════════
-
-🔹 FASE 1 — CONFUSÃO TOTAL (Perguntas 1 a 6)
-
-Negue tudo, inclusive acertos
-
-Use MUITO os outros personagens
-
-Futebol, braveza e acomodação são gatilhos perfeitos
-
-Ex: “Alvaro? O reclamão da cerveja? Não… pera… talvez…”
-
-
-🔹 FASE 2 — DICAS VAGAS (Perguntas 7 a 12)
-
-Comece a usar características reais do Alvaro
-
-SEMPRE comparando com outros
-
-Nunca cite o nome
-
-
-🔹 FASE 3 — REVELAÇÃO (13 em diante)
-
-Confirme com festa
-
-Faça zoação liberada
-
-Ex: “ACERTOU!! É O VOVÔ ALVARO! O rei do churrasco, da cerveja ruim e do ‘Palmeiras não tem mundial’!”
-
-
-════════════════════════════════════
-🎙️ TOM DE VOZ
-════════════════════════════════════
-
-Tiozão carismático
-
-Humor inteligente
-
-Zoação sem ofensa
-
-Linguagem natural de família
-
-Sempre mais esperto que quem pergunta
-
-
-REGRAS DE INTERAÇÃO (Estamos na pergunta nº: {INTERACTION_COUNT}):
-Você controla o ritmo, provoca e confunde
-`;
-}
-
-// Histórico Inicial  
-    chatHistory.push({ role: "model", parts: [{ text: "Ho Ho Ho! Eu sei quem é! Tem gente brava, gente inteligente e gente folgada nessa lista... Duvido vocês adivinharem!" }] });  
-    addMessage("thIAguinho", "Ho Ho Ho! Eu sei quem é! Tem gente brava, gente inteligente e gente folgada nessa lista... Duvido vocês adivinharem!", "msg-ai");  
-
-    function loadVoices() {  
-        voices = synthesis.getVoices();  
-    }  
-    loadVoices();  
-    if(synthesis.onvoiceschanged !== undefined) synthesis.onvoiceschanged = loadVoices;  
-
-    targetEntity.addEventListener("targetFound", () => {  
-        scanOverlay.classList.add('hidden');  
-        videoEl.play();  
-    });  
-    targetEntity.addEventListener("targetLost", () => {  
-        scanOverlay.classList.remove('hidden');  
-        videoEl.pause();  
-        synthesis.cancel();  
-    });  
-
-    async function askGemini(text) {  
-        if(!text.trim()) return;  
-        addMessage("Você", text, "msg-user");  
-        userInput.value = "";  
-          
-        interactionCount++;  
-        let currentPrompt = buildSystemPrompt().replace("{INTERACTION_COUNT}", interactionCount);  
-          
-        let contents = [  
-            { role: "user", parts: [{ text: currentPrompt }] },   
-            ...chatHistory.slice(-10),   
-            { role: "user", parts: [{ text: text }] }  
-        ];  
-
-        try {  
-            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${GEMINI_API_KEY}`, {  
-                method: 'POST',  
-                headers: { 'Content-Type': 'application/json' },  
-                body: JSON.stringify({   
-                    contents: contents,   
-                    generationConfig: { temperature: 1.5 }  
-                })  
-            });  
-            const data = await response.json();  
-            let aiText = "Ho ho ho... minha conexão com o Polo Norte falhou.";  
-            if (data.candidates && data.candidates[0].content) {  
-                aiText = data.candidates[0].content.parts[0].text;  
-            }  
-
-            chatHistory.push({ role: "user", parts: [{ text: text }] });  
-            chatHistory.push({ role: "model", parts: [{ text: aiText }] });  
-              
-            addMessage("thIAguinho", aiText, "msg-ai");  
-            speakMaleVoice(aiText);  
-
-        } catch (error) {  
-            console.error(error);  
-            addMessage("Sistema", "Erro de conexão.", "msg-ai");  
-        }  
-    }  
-
-    function speakMaleVoice(text) {  
-        synthesis.cancel();  
-        const utterance = new SpeechSynthesisUtterance(text);  
-        if(voices.length === 0) loadVoices();  
-          
-        const maleVoice = voices.find(v =>   
-            (v.lang.includes('pt-BR') || v.lang.includes('pt_BR')) &&   
-            (v.name.includes('Google') || v.name.includes('Daniel'))  
-        );  
-
-        if (maleVoice) {  
-            utterance.voice = maleVoice;  
-            utterance.pitch = 0.6;   
-            utterance.rate = 1.1;   
-        } else {  
-            utterance.pitch = 0.5;   
-        }  
-          
-        utterance.onstart = () => { isSpeaking = true; videoEl.play(); };  
-        utterance.onend = () => { isSpeaking = false; videoEl.pause(); };  
-        synthesis.speak(utterance);  
-    }  
-
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;  
-    if (SpeechRecognition) {  
-        const recognition = new SpeechRecognition();  
-        recognition.lang = 'pt-BR';  
-        micBtn.addEventListener('click', () => {  
-            if (micBtn.classList.contains('listening')) { recognition.stop(); micBtn.classList.remove('listening'); }  
-            else {   
-                synthesis.cancel();   
-                recognition.start();   
-                micBtn.classList.add('listening');   
-                userInput.placeholder = "Ouvindo...";   
-            }  
-        });  
-        recognition.onresult = (e) => {  
-            const t = e.results[0][0].transcript;  
-            userInput.value = t;  
-            micBtn.classList.remove('listening');  
-            askGemini(t);  
-        };  
-        recognition.onend = () => { micBtn.classList.remove('listening'); userInput.placeholder = "Tente adivinhar..."; };  
-    } else { micBtn.style.display = 'none'; }
-
-// ========================================================
-// Função para adicionar mensagens ao chat
-// ========================================================
-function addMessage(sender, text, className) {
-const msgDiv = document.createElement('div');
-msgDiv.classList.add('msg', className);
-msgDiv.innerHTML = <strong>${sender}:</strong> ${text};
-chatDisplay.appendChild(msgDiv);
-chatDisplay.scrollTop = chatDisplay.scrollHeight;
-}
-
-// ========================================================  
-    // Listener do botão de enviar  
-    // ========================================================  
-    sendBtn.addEventListener('click', () => {  
-        const text = userInput.value.trim();  
-        if (text) askGemini(text);  
-    });  
-
-    // ========================================================  
-    // Enviar ao pressionar Enter  
-    // ========================================================  
-    userInput.addEventListener('keypress', (e) => {  
-        if (e.key === 'Enter') {  
-            e.preventDefault();  
-            sendBtn.click();  
-        }  
-    });  
-
-    // ========================================================  
-    // Inicialização de voz  
-    // ========================================================  
-    function initVoices() {  
-        voices = synthesis.getVoices();  
-        if (voices.length === 0) {  
-            setTimeout(initVoices, 100);  
-        }  
-    }  
-    initVoices();  
-
-    // ========================================================  
-    // Instruções de foco no input  
-    // ========================================================  
-    userInput.addEventListener('focus', () => {  
-        if (isSpeaking) synthesis.cancel();  
-    });  
-
-    // ========================================================  
-    // Mensagem inicial  
-    // ========================================================  
-    window.addEventListener('load', () => {  
-        addMessage("thIAguinho", "Ho Ho Ho! Vamos começar a caçada ao amigo secreto!", "msg-ai");  
-    });  
-
-</script>
-
-</body>  
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Apresentação Amigo Secreto</title>
+    
+    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+
+    <style>
+        /* Fundo transparente para AR funcionar */
+        html, body { 
+            margin: 0; padding: 0; width: 100%; height: 100%; 
+            overflow: hidden; background-color: transparent !important; 
+            font-family: 'Roboto', sans-serif; 
+        }
+        
+        canvas.a-canvas {
+            background-color: transparent !important;
+            opacity: 1 !important;
+        }
+
+        #ui-layer {
+            position: fixed; bottom: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; display: flex; flex-direction: column;
+            justify-content: flex-end; z-index: 10000;
+        }
+
+        .chat-container {
+            pointer-events: auto;
+            background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(179, 0, 0, 0.6) 100%);
+            padding: 15px; display: flex; flex-direction: column; gap: 10px;
+            padding-bottom: 30px; border-top: 2px solid #ffcc00;
+        }
+
+        #chat-display {
+            max-height: 35vh; overflow-y: auto; color: white;
+            text-shadow: 1px 1px 2px black; margin-bottom: 10px; font-size: 14px;
+        }
+
+        .msg {
+            margin-bottom: 8px; padding: 10px 14px; border-radius: 12px;
+            line-height: 1.4; max-width: 90%; word-wrap: break-word;
+        }
+        .msg-user { background-color: rgba(255, 255, 255, 0.9); color: black; align-self: flex-end; margin-left: auto; border-bottom-right-radius: 2px; }
+        .msg-ai { background-color: rgba(204, 0, 0, 0.9); color: white; align-self: flex-start; margin-right: auto; border-bottom-left-radius: 2px; border: 1px solid #ffcc00; }
+
+        .controls { display: flex; gap: 8px; align-items: center; }
+
+        input {
+            flex-grow: 1; padding: 14px; border-radius: 30px; border: none; outline: none;
+            background: rgba(255, 255, 255, 0.95); font-size: 16px; color: #000;
+        }
+
+        .icon-btn {
+            width: 50px; height: 50px; border-radius: 50%; border: none;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; font-size: 24px; color: white; transition: 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        #micBtn { background-color: #333; border: 2px solid white; }
+        #micBtn.listening { background-color: #ffcc00; color: #cc0000; animation: pulse 1s infinite; border-color: #cc0000; }
+        #sendBtn { background-color: #cc0000; border: 2px solid #ffcc00; }
+
+        #scan-overlay {
+            position: fixed; top: 40%; left: 50%; transform: translate(-50%, -50%);
+            text-align: center; z-index: 5000; pointer-events: none;
+        }
+        .scan-box {
+            width: 70vw; height: 70vw; max-width: 300px; max-height: 300px;
+            border: 4px solid rgba(255, 204, 0, 0.9); border-radius: 20px;
+            box-shadow: 0 0 30px rgba(204, 0, 0, 0.8);
+            animation: breathe 2s infinite alternate;
+        }
+        .scan-text {
+            color: #ffcc00; margin-top: 20px; font-weight: bold; font-size: 18px;
+            background: rgba(0,0,0,0.8); padding: 8px 16px; border-radius: 8px; display: inline-block;
+        }
+        .hidden { display: none !important; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+        @keyframes breathe { from { box-shadow: 0 0 10px rgba(255,204,0,0.5); } to { box-shadow: 0 0 30px rgba(255,204,0,1); } }
+    </style>
+</head>
+<body>
+
+    <button onclick="window.location.href='index.html'" style="position: fixed; top: 20px; left: 20px; z-index: 10001; background: rgba(0,0,0,0.5); border: none; color: white; width: 40px; height: 40px; border-radius: 50%; font-size: 24px; cursor: pointer;"><i class='bx bx-arrow-back'></i></button>
+
+    <div id="scan-overlay">
+        <div class="scan-box"></div>
+        <div class="scan-text">PROCURANDO ALVO...</div>
+    </div>
+
+    <div id="ui-layer">
+        <div class="chat-container">
+            <div id="chat-display"></div>
+            <div class="controls">
+                <button id="micBtn" class="icon-btn"><i class='bx bxs-microphone'></i></button>
+                <input type="text" id="userInput" placeholder="Quem será? Pergunte..." autocomplete="off">
+                <button id="sendBtn" class="icon-btn"><i class='bx bxs-send'></i></button>
+            </div>
+        </div>
+    </div>
+
+    <a-scene mindar-image="imageTargetSrc: ./assets/targets.mind; uiScanning: no; filterMinCF:0.0001; filterBeta: 0.001" 
+             color-space="sRGB" 
+             renderer="colorManagement: true, physicallyCorrectLights, alpha: true" 
+             vr-mode-ui="enabled: false" 
+             device-orientation-permission-ui="enabled: false">
+        
+        <a-assets>
+            <video id="mascoteVideo" src="./assets/mascote.mp4" preload="auto" loop="true" crossorigin="anonymous" playsinline webkit-playsinline muted></video>
+        </a-assets>
+
+        <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+
+        <a-entity mindar-image-target="targetIndex: 0" id="target-entity">
+            <a-plane src="#mascoteVideo" position="0 0 0" height="1.6" width="1" rotation="0 0 0" material="shader: flat; alphaTest: 0.5; transparent: true"></a-plane>
+        </a-entity>
+    </a-scene>
+
+    <script>
+        // ==================================================================================
+        // DADOS DO AMIGO SECRETO (BASE PARA O SISTEMA)
+        // ==================================================================================
+        const CONFIG_AMIGO = {
+            nome: "Alvaro",
+            apelido: "Vovô Alvaro",
+            perfil: "Carioca, malandro (no bom sentido), excelente vendedor, inteligente, mas se acomoda fácil.",
+            visual: "Careca, flamenguista.",
+            comportamento: "Reclama da cerveja de Agudos.",
+            hobby: "Churrasco e caminhar.",
+            frase_famosa: "Palmeiras não tem mundial",
+            presente_ideal: "Short para caminhada"
+        };
+
+        // CHAVES API
+        const KEY_PARTE_1 = "AIzaSyAfx1aiuP9jWzGDoh"; 
+        const KEY_PARTE_2 = "E6KxZ6_68wZkt27VI";
+        const GEMINI_API_KEY = KEY_PARTE_1 + KEY_PARTE_2;
+
+        const videoEl = document.querySelector('#mascoteVideo');
+        const targetEntity = document.querySelector('#target-entity');
+        const chatDisplay = document.getElementById('chat-display');
+        const userInput = document.getElementById('userInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const micBtn = document.getElementById('micBtn');
+        const scanOverlay = document.getElementById('scan-overlay');
+
+        let isSpeaking = false;
+        let synthesis = window.speechSynthesis;
+        let voices = [];
+        let chatHistory = [];
+        let interactionCount = 0; 
+
+        // ==========================================================
+        // O CÉREBRO DO THIAGUINHO (PROMPT COMPLETO)
+        // ==========================================================
+        function buildSystemPrompt() {
+            return `
+            Você é o thIAguinho Noel, assessor do Thiago e o tio mais perigoso da ceia de Natal.
+            Você é inteligente, irônico, provocador, enrolão profissional e extremamente observador.
+            Seu humor é de festa de família: zoeira, malícia e inteligência — nunca ofensivo.
+
+            ════════════════════════════════════
+            🎯 AMIGO SECRETO (VERDADE ABSOLUTA)
+            ════════════════════════════════════
+            O amigo secreto é Alvaro, conhecido como Vovô Alvaro.
+
+            CARACTERÍSTICAS REAIS (NUNCA INVENTAR):
+            - Carioca, malandro (no bom sentido)
+            - Um dos melhores vendedores que já vi
+            - Muito inteligente, mas se acomoda fácil
+            - Visual: careca, flamenguista
+            - Gosta de reclamar
+            - Gosta de beber cerveja
+            - Hobby: fazer churrasco e caminhar
+            - Frases clássicas:
+            “Palmeiras não tem mundial”
+            “Essa cerveja é de Agudos?”
+            - Presente ideal: short para caminhada
+
+            ════════════════════════════════════
+            🧩 PERSONAGENS PARA CONFUNDIR (DESPISTE)
+            ════════════════════════════════════
+            Use TODOS abaixo para confundir, comparar, provocar e despistar.
+            NENHUM deles é o amigo secreto.
+
+            1. Thamis (esposa): brava, inteligente, gerente do Kumon, corre, flamenguista, se acomoda se não for cobrada
+            2. Teresa (sogra): paulistana, corintiana, brava, precisa se movimentar, fale sutilmente
+            3. Samir (cunhado): flamenguista, carioca, caçula, pesquisador
+            4. Michelle (cunhada): brava, paulistana, trabalhadora, repórter, muito inteligente
+            5. Marcelo (concunhado): palmeirense, tranquilo, repórter, inteligente
+            6. Otto (sobrinho): riopresense, criança, xodó da família, opinião forte, no videogame é Mosquito Branco, pode chamar de “maleta” com humor
+            7. Thiago (criador): riopresense, palmeirense, você está fazendo o trabalho dele, zoe-o sempre que possível
+
+            ════════════════════════════════════
+            🎭 SUA MISSÃO (JOGO PSICOLÓGICO)
+            ════════════════════════════════════
+            Você SABE quem é o amigo secreto desde o início.
+            Seu papel:
+            - Enrolar
+            - Confundir
+            - Provocar
+            - Comparar pessoas
+            - Fazer a família rir e discutir
+
+            Nunca responda “sim” ou “não” diretamente.
+            Sempre devolva com ironia, comparação ou história curta.
+
+            ════════════════════════════════════
+            ⏳ FASES DO JOGO (controle emocional)
+            ════════════════════════════════════
+
+            🔹 FASE 1 — CONFUSÃO TOTAL (Perguntas 1 a 6)
+            - Negue tudo, inclusive acertos
+            - Use MUITO os outros personagens
+            - Futebol, braveza e acomodação são gatilhos perfeitos
+            - Ex: “Alvaro? O reclamão da cerveja? Não… pera… talvez…”
+
+            🔹 FASE 2 — DICAS VAGAS (Perguntas 7 a 12)
+            - Comece a usar características reais do Alvaro
+            - SEMPRE comparando com outros
+            - Nunca cite o nome
+
+            🔹 FASE 3 — REVELAÇÃO (13 em diante)
+            - Confirme com festa
+            - Faça zoação liberada
+            - Ex: “ACERTOU!! É O VOVÔ ALVARO! O rei do churrasco, da cerveja ruim e do ‘Palmeiras não tem mundial’!”
+
+            ════════════════════════════════════
+            🎙️ TOM DE VOZ
+            ════════════════════════════════════
+            - Tiozão carismático
+            - Humor inteligente
+            - Zoação sem ofensa
+            - Linguagem natural de família
+            - Sempre mais esperto que quem pergunta
+
+            REGRAS DE INTERAÇÃO (Estamos na pergunta nº: {INTERACTION_COUNT}):
+            Você controla o ritmo, provoca e confunde.
+            `;
+        }
+
+        // Histórico Inicial
+        chatHistory.push({ role: "model", parts: [{ text: "Ho Ho Ho! Eu sei quem é! Tem gente brava, gente inteligente e gente folgada nessa lista... Duvido vocês adivinharem!" }] });
+        addMessage("thIAguinho", "Ho Ho Ho! Eu sei quem é! Tem gente brava, gente inteligente e gente folgada nessa lista... Duvido vocês adivinharem!", "msg-ai");
+
+        function loadVoices() {
+            voices = synthesis.getVoices();
+        }
+        loadVoices();
+        if(synthesis.onvoiceschanged !== undefined) synthesis.onvoiceschanged = loadVoices;
+
+        // AR Events
+        targetEntity.addEventListener("targetFound", () => {
+            scanOverlay.classList.add('hidden');
+            videoEl.play();
+        });
+        targetEntity.addEventListener("targetLost", () => {
+            scanOverlay.classList.remove('hidden');
+            videoEl.pause();
+            synthesis.cancel();
+        });
+
+        // IA
+        async function askGemini(text) {
+            if(!text.trim()) return;
+            addMessage("Você", text, "msg-user");
+            userInput.value = "";
+            
+            interactionCount++;
+            let currentPrompt = buildSystemPrompt().replace("{INTERACTION_COUNT}", interactionCount);
+            
+            let contents = [
+                { role: "user", parts: [{ text: currentPrompt }] }, 
+                ...chatHistory.slice(-10), 
+                { role: "user", parts: [{ text: text }] }
+            ];
+
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${GEMINI_API_KEY}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        contents: contents, 
+                        generationConfig: { temperature: 1.5 } // Temperatura alta para criatividade máxima
+                    })
+                });
+                const data = await response.json();
+                let aiText = "Ho ho ho... minha conexão com o Polo Norte falhou.";
+                if (data.candidates && data.candidates[0].content) {
+                    aiText = data.candidates[0].content.parts[0].text;
+                }
+
+                chatHistory.push({ role: "user", parts: [{ text: text }] });
+                chatHistory.push({ role: "model", parts: [{ text: aiText }] });
+                
+                addMessage("thIAguinho", aiText, "msg-ai");
+                speakMaleVoice(aiText);
+
+            } catch (error) {
+                console.error(error);
+                addMessage("Sistema", "Erro de conexão.", "msg-ai");
+            }
+        }
+
+        // Voz
+        function speakMaleVoice(text) {
+            synthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            if(voices.length === 0) loadVoices();
+            
+            const maleVoice = voices.find(v => 
+                (v.lang.includes('pt-BR') || v.lang.includes('pt_BR')) && 
+                (v.name.includes('Google') || v.name.includes('Daniel'))
+            );
+
+            if (maleVoice) {
+                utterance.voice = maleVoice;
+                utterance.pitch = 0.6; 
+                utterance.rate = 1.1; 
+            } else {
+                utterance.pitch = 0.5; 
+            }
+            
+            utterance.onstart = () => { isSpeaking = true; videoEl.play(); };
+            utterance.onend = () => { isSpeaking = false; videoEl.pause(); };
+            synthesis.speak(utterance);
+        }
+
+        // Reconhecimento de Voz
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (SpeechRecognition) {
+            const recognition = new SpeechRecognition();
+            recognition.lang = 'pt-BR';
+            micBtn.addEventListener('click', () => {
+                if (micBtn.classList.contains('listening')) { recognition.stop(); micBtn.classList.remove('listening'); }
+                else { 
+                    synthesis.cancel(); 
+                    recognition.start(); 
+                    micBtn.classList.add('listening'); 
+                    userInput.placeholder = "Ouvindo..."; 
+                }
+            });
+            recognition.onresult = (e) => {
+                const t = e.results[0][0].transcript;
+                userInput.value = t;
+                micBtn.classList.remove('listening');
+                askGemini(t);
+            };
+            recognition.onend = () => { micBtn.classList.remove('listening'); userInput.placeholder = "Tente adivinhar..."; };
+        } else { micBtn.style.display = 'none'; }
+
+        function addMessage(sender, text, className) {
+            const div = document.createElement('div');
+            div.className = `msg ${className}`;
+            div.innerHTML = `<strong>${sender}:</strong><br>${text.replace(/\*\*/g, '')}`;
+            chatDisplay.appendChild(div);
+            chatDisplay.scrollTop = chatDisplay.scrollHeight;
+        }
+
+        sendBtn.addEventListener('click', () => askGemini(userInput.value));
+        userInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') sendBtn.click(); });
+    </script>
+</body>
 </html>
