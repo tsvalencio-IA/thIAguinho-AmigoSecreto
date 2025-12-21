@@ -124,7 +124,7 @@
 
     <script>
         // ==================================================================================
-        // DADOS DO AMIGO SECRETO (ALVARO) - CONFIGURAÇÃO REAL
+        // DADOS DO AMIGO SECRETO (ALVARO)
         // ==================================================================================
         const CONFIG_AMIGO = {
             nome: "Alvaro",
@@ -157,7 +157,7 @@
         let interactionCount = 0; 
 
         // ==========================================================
-        // O CÉREBRO DO THIAGUINHO (SUTILEZA E ZOEIRA CALIBRADAS)
+        // O CÉREBRO DO THIAGUINHO (PROMPT COMPLETO E SEM CENSURA)
         // ==========================================================
         function buildSystemPrompt() {
             return `
@@ -243,11 +243,17 @@
             synthesis.cancel();
         });
 
-        // IA
+        // ==================================================================================
+        // LÓGICA DO CHAT (Com proteção anti-falha)
+        // ==================================================================================
         async function askGemini(text) {
             if(!text.trim()) return;
+            
+            // UI Feedback
             addMessage("Você", text, "msg-user");
             userInput.value = "";
+            userInput.disabled = true; // Evita duplo envio
+            sendBtn.disabled = true;
             
             interactionCount++;
             let currentPrompt = buildSystemPrompt().replace("{INTERACTION_COUNT}", interactionCount);
@@ -268,11 +274,13 @@
                     })
                 });
                 const data = await response.json();
+                
                 let aiText = "Ho ho ho... minha conexão com o Polo Norte falhou.";
                 if (data.candidates && data.candidates[0].content) {
                     aiText = data.candidates[0].content.parts[0].text;
                 }
 
+                // Salva e exibe
                 chatHistory.push({ role: "user", parts: [{ text: text }] });
                 chatHistory.push({ role: "model", parts: [{ text: aiText }] });
                 
@@ -280,36 +288,42 @@
                 speakMaleVoice(aiText);
 
             } catch (error) {
-                console.error(error);
-                addMessage("Sistema", "Erro de conexão.", "msg-ai");
+                console.error("Erro API:", error);
+                addMessage("Sistema", "Erro de conexão. Tente novamente.", "msg-ai");
+            } finally {
+                userInput.disabled = false;
+                sendBtn.disabled = false;
+                userInput.focus();
             }
         }
 
         // ==========================================================
-        // CORREÇÃO DA VOZ (GRAVE - EFEITO PAPAI NOEL)
+        // CORREÇÃO DA VOZ (MODO MONSTRO/GRAVE)
         // ==========================================================
-         = 
-
- function speakMaleVoice(text) {
+        function speakMaleVoice(text) {
             synthesis.cancel();
             const utterance = new SpeechSynthesisUtterance(text);
             
+            // Tenta recarregar vozes se estiver vazio
             if(voices.length === 0) voices = synthesis.getVoices();
             
+            // Busca voz em PT-BR
             const ptVoice = voices.find(v => v.lang.includes('pt-BR') || v.lang.includes('pt_BR'));
 
             if (ptVoice) {
                 utterance.voice = ptVoice;
-                // AQUI ESTÁ A MÁGICA PARA TIRAR A VOZ FEMININA A FORÇA:
-                utterance.pitch = 0.1; // Tom super grave (quase monstro)
-                utterance.rate = 0.9;  // Fala mais lenta para reforçar o grave
+                // AQUI ESTÁ O TRUQUE: Pitch 0.2 deixa a voz MUITO GRAVE
+                utterance.pitch = 0.2; 
+                utterance.rate = 1.0; 
             } else {
-                utterance.pitch = 0.1;
-                utterance.rate = 0.9;
+                // Fallback se não achar PT-BR (raro)
+                utterance.pitch = 0.2;
             }
             
             utterance.onstart = () => { isSpeaking = true; videoEl.play(); };
             utterance.onend = () => { isSpeaking = false; videoEl.pause(); };
+            
+            // Dispara a fala
             synthesis.speak(utterance);
         }
 
@@ -344,6 +358,7 @@
             chatDisplay.scrollTop = chatDisplay.scrollHeight;
         }
 
+        // Event Listeners (GARANTIDOS)
         sendBtn.addEventListener('click', () => askGemini(userInput.value));
         userInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') sendBtn.click(); });
     </script>
