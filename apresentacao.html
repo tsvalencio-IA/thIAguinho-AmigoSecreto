@@ -32,15 +32,15 @@
 
         .chat-container {
             pointer-events: auto;
-            /* VISUALIZAÇÃO CORRIGIDA: Gradiente totalmente transparente no topo para ver o boneco */
+            /* VISUALIZAÇÃO CORRIGIDA: Gradiente 100% transparente no topo para ver o boneco */
             background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0) 100%);
             padding: 15px; display: flex; flex-direction: column; gap: 10px;
             padding-bottom: 30px; 
-            border-top: none; /* Borda removida para não criar linha no meio da tela */
+            border-top: none; /* Removida a borda sólida que cortava a tela */
         }
 
         #chat-display {
-            /* VISUALIZAÇÃO CORRIGIDA: Altura travada em 20% para não subir no rosto do AR */
+            /* VISUALIZAÇÃO CORRIGIDA: Altura travada em 20vh para não subir no rosto */
             max-height: 20vh; 
             overflow-y: auto; color: white;
             text-shadow: 1px 1px 2px black; margin-bottom: 10px; font-size: 14px;
