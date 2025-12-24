@@ -32,13 +32,16 @@
 
         .chat-container {
             pointer-events: auto;
-            background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(179, 0, 0, 0.6) 100%);
+            /* CORREÇÃO VISUAL 1: Transparência aumentada (0.7 e 0.2) para ver o boneco atrás do chat */
+            background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(179, 0, 0, 0.2) 100%);
             padding: 15px; display: flex; flex-direction: column; gap: 10px;
             padding-bottom: 30px; border-top: 2px solid #ffcc00;
         }
 
         #chat-display {
-            max-height: 35vh; overflow-y: auto; color: white;
+            /* CORREÇÃO VISUAL 2: Altura reduzida para 20vh (era 35vh) para não tapar o rosto do boneco */
+            max-height: 20vh; 
+            overflow-y: auto; color: white;
             text-shadow: 1px 1px 2px black; margin-bottom: 10px; font-size: 14px;
         }
 
