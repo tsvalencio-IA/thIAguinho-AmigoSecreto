@@ -24,22 +24,41 @@
             opacity: 1 !important;
         }
 
+        /* LAYOUT DIVIDIDO: Chat na metade de cima (50%) */
         #ui-layer {
-            position: fixed; bottom: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none; display: flex; flex-direction: column;
-            justify-content: flex-end; z-index: 10000;
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 50vh; /* 50% da tela */
+            pointer-events: none; 
+            display: flex; 
+            flex-direction: column;
+            z-index: 10000;
         }
 
         .chat-container {
             pointer-events: auto;
-            background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(179, 0, 0, 0.6) 100%);
-            padding: 15px; display: flex; flex-direction: column; gap: 10px;
-            padding-bottom: 30px; border-top: 2px solid #ffcc00;
+            width: 100%;
+            height: 100%; 
+            /* Fundo escuro semi-transparente para leitura */
+            background: rgba(0, 0, 0, 0.6); 
+            padding: 15px; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 10px;
+            /* Borda embaixo para separar da câmera */
+            border-bottom: 2px solid #ffcc00; 
+            border-top: none;
         }
 
         #chat-display {
-            max-height: 35vh; overflow-y: auto; color: white;
-            text-shadow: 1px 1px 2px black; margin-bottom: 10px; font-size: 14px;
+            flex-grow: 1; 
+            overflow-y: auto; 
+            color: white;
+            text-shadow: 1px 1px 2px black; 
+            margin-bottom: 5px; 
+            font-size: 14px;
         }
 
         .msg {
@@ -66,9 +85,15 @@
         #micBtn.listening { background-color: #ffcc00; color: #cc0000; animation: pulse 1s infinite; border-color: #cc0000; }
         #sendBtn { background-color: #cc0000; border: 2px solid #ffcc00; }
 
+        /* ALVO NA METADE DE BAIXO */
         #scan-overlay {
-            position: fixed; top: 40%; left: 50%; transform: translate(-50%, -50%);
-            text-align: center; z-index: 5000; pointer-events: none;
+            position: fixed; 
+            top: 75%; /* Centralizado na metade inferior */
+            left: 50%; 
+            transform: translate(-50%, -50%);
+            text-align: center; 
+            z-index: 5000; 
+            pointer-events: none;
         }
         .scan-box {
             width: 70vw; height: 70vw; max-width: 300px; max-height: 300px;
@@ -174,7 +199,7 @@
             - É CARECA.
             - É CARIOCA.
             - É FLAMENGUISTA.
-            - É VENDEDOR NATO e RECLAMÃO (especialmente de cerveja ruim iu se bebem a cerveja dele).
+            - É VENDEDOR NATO e RECLAMÃO (especialmente de cerveja ruim ou se bebem a cerveja dele).
             - HOBBY: Caminhar e Churrasco.
 
             ════════════════════════════════════
@@ -197,9 +222,9 @@ crítico: não diga sofá, não diga saia do lugar, mas diga que ela precisa se 
             5. MARCELO (Concunhado): Palmeirense,Paulistano, Tranquilo, Repórter.
             
             6. OTTO (Sobrinho): Criança, opinião forte, inteligente, adora se vestir do super-herói Miles Morales. no vídeo game gosta de ser o Maskito Branco. Riopresense.
-               >>> CARTA NA MANGA: "Maleta" (opinião forte) e "Masquito Branco e Miles Morales". Se perguntarem se é chato, diga: "Chato não, exigente! Tipo o Maleta do Otto!". (NÃO ZOE A ALTURA DO OTTO).
+               >>> CARTA NA MANGA: (opinião forte) e "Masquito Branco e Miles Morales". Se perguntarem se é chato, diga: "Chato não, exigente! Tipo o Maleta do Otto!". (NÃO ZOE A ALTURA DO OTTO).
 
-            7. THIAGO (Quem tirou): Riopretense( terra da Capivara ), Baixinho, atleta de corrida de rua, vendedor, gerente de oficina mecânica, jogador de futevôlei, teimoso a desenvolvedor ( e de tão teimoso, desenvolve mesmo...)Palmeirense.
+            7. THIAGO (Quem tirou): Riopretense( terra da Capivara ), Baixinho, atleta de corrida de rua, churrasqueiro, vendedor, gerente de oficina mecânica, jogador de futevôlei, teimoso a desenvolvedor ( e de tão teimoso, desenvolve mesmo...)Palmeirense.
                >>> CARTA NA MANGA: Zoe a altura dele o tempo todo e sua teimosia. "O meu chefe anão de jardim...".
 
             ════════════════════════════════════
@@ -252,7 +277,7 @@ crítico: não diga sofá, não diga saia do lugar, mas diga que ela precisa se 
         targetEntity.addEventListener("targetLost", () => {
             scanOverlay.classList.remove('hidden');
             videoEl.pause();
-            synthesis.cancel();
+            // CORREÇÃO: Removido synthesis.cancel() para o áudio continuar mesmo se perder o alvo
         });
 
         // ==================================================================================
@@ -305,7 +330,7 @@ crítico: não diga sofá, não diga saia do lugar, mas diga que ela precisa se 
             } finally {
                 userInput.disabled = false;
                 sendBtn.disabled = false;
-                userInput.focus();
+                // CORREÇÃO: Removido userInput.focus() para não abrir o teclado sozinho
             }
         }
 
