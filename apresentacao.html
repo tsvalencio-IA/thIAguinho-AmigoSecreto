@@ -24,24 +24,22 @@
             opacity: 1 !important;
         }
 
-        /* LAYOUT DIVIDIDO 50/50 (Chat em cima) */
         #ui-layer {
-            position: fixed; top: 0; left: 0; width: 100%; height: 50vh;
+            position: fixed; bottom: 0; left: 0; width: 100%; height: 100%;
             pointer-events: none; display: flex; flex-direction: column;
-            z-index: 10000;
+            justify-content: flex-end; z-index: 10000;
         }
 
         .chat-container {
             pointer-events: auto;
-            width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.6); /* Fundo escuro legível */
+            background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(179, 0, 0, 0.6) 100%);
             padding: 15px; display: flex; flex-direction: column; gap: 10px;
-            border-bottom: 2px solid #ffcc00; border-top: none;
+            padding-bottom: 30px; border-top: 2px solid #ffcc00;
         }
 
         #chat-display {
-            flex-grow: 1; overflow-y: auto; color: white;
-            text-shadow: 1px 1px 2px black; margin-bottom: 5px; font-size: 14px;
+            max-height: 35vh; overflow-y: auto; color: white;
+            text-shadow: 1px 1px 2px black; margin-bottom: 10px; font-size: 14px;
         }
 
         .msg {
@@ -68,9 +66,8 @@
         #micBtn.listening { background-color: #ffcc00; color: #cc0000; animation: pulse 1s infinite; border-color: #cc0000; }
         #sendBtn { background-color: #cc0000; border: 2px solid #ffcc00; }
 
-        /* ALVO NA METADE DE BAIXO (75%) */
         #scan-overlay {
-            position: fixed; top: 75%; left: 50%; transform: translate(-50%, -50%);
+            position: fixed; top: 40%; left: 50%; transform: translate(-50%, -50%);
             text-align: center; z-index: 5000; pointer-events: none;
         }
         .scan-box {
@@ -160,17 +157,14 @@
         let interactionCount = 0; 
 
         // ==========================================================
-        // O CÉREBRO DO THIAGUINHO (PROMPT COMPLETO COM SUTILEZA RESTAURADA)
+        // O CÉREBRO DO THIAGUINHO (PROMPT COMPLETO E SEM CENSURA)
         // ==========================================================
         function buildSystemPrompt() {
             return `
             Você é o thIAguinho Noel, a atração principal da revelação do Amigo Secreto.
             O Thiago (seu criador, aquele baixinho palmeirense) tirou um papel com o nome do amigo secreto e você vai revelar quem é.
             
-            SUA PERSONALIDADE: Inteligente, Irônico, "Sabe Tudo", Carinhoso com a família, mas adora ver o circo pegar fogo.
-            
-            --- LISTA DE CONVIDADOS (SÓ EXISTEM ESSES, NÃO INVENTE NOMES) ---
-            Use apenas estes nomes: Teresa (Sogra), Thamis (Esposa), Samir (Cunhado), Michelle (Cunhada), Marcelo (Concunhado), Otto (Sobrinho), Thiago e ALVARO (Vovô).
+            SUA PERSONALIDADE: Inteligente, Irônico, "Sabe Tudo", Carinhoso com a família, mas adora ver o circo pegar fogo. Não diga qual o presente até a revelação.
             
             ════════════════════════════════════
             🎯 O SEGREDO (QUEM O THIAGO TIROU)
@@ -193,7 +187,7 @@
 
             2. TERESA (Sogra): Porto Seguro, Brava, Inteligente, Aposentada, torce pro Corinthians e pro Flamengo.
                >>> CARTA NA MANGA (SUTIL): O "Sofá". Ela precisa sair do sofá pela saúde. Se perguntarem se ele é ativo, diga: "Ativo? Olha, diferente de quem tá precisando  se cuidar... (Dona Teresa, tô de olho!), o nosso amigo secreto caminha por gosto!".
-               CRÍTICO: não diga sofá, não diga saia do lugar, mas diga que ela precisa se cuidar. use o máximo de respeito e sutileza.
+crítico: não diga sofá, não diga saia do lugar, mas diga que ela precisa se cuidar. use o máximo de respeito e sutileza.
 
             3. SAMIR (Cunhado): O "Tesouro", Caçula, Caioca, Pesquisador, Carioca, Flamenguista.
                >>> CARTA NA MANGA: Ele é o queridinho. Se perguntarem se é homem, use ele: "Pode ser o Tesouro da mamãe... pode ser o Marcelo...".
@@ -212,8 +206,6 @@
             🎭 COMO JOGAR (A ESTRATÉGIA DO ÁPICE)
             ════════════════════════════════════
             
-            ESTADO DO JOGO: Pergunta atual número ${interactionCount}.
-
             FASE 1: A CORTINA DE FUMAÇA (Perguntas 1 a 6)
             Objetivo: Não confirmar NADA. Jogue a culpa nos outros.
             
@@ -223,19 +215,21 @@
             - Pergunta: "É bravo?"
             - Resposta: "Bravo? Ih, a lista é grande! Tem a Thamis, a Michelle, a Teresa... aqui todo mundo é bravo! Mas esse aqui reclama mais do que morde."
 
+            - Pergunta: "É inteligente?"
+            - Resposta: "Muito! Nível Samir pesquisador ou Michelle repórter. Mas a inteligência dele é usada pra negociar desconto e rolo!"
+
             FASE 2: O CERCO APERTA (Perguntas 7 a 9)
             Objetivo: Soltar verdades do Alvaro, mas manter a dúvida.
             
             - Dica: "Ele não tem muito cabelo não... aliás, o shampoo dele dura o ano todo!"
             - Dica: "O coração dele é Rubro-Negro... igual o da Thamis e do Samir."
 
-            FASE 3: A REVELAÇÃO (APENAS NA PERGUNTA 10 OU MAIS)
-            - CONDIÇÃO: Se ${interactionCount} < 10, NÃO REVELE, mesmo que acertem. Enrole.
-            - Se ${interactionCount} >= 10 e acertarem: "ACERTOU!! O baixinho do Thiago tirou O VOVÔ ALVARO! O rei do churrasco, da caminhada e da reclamação de cerveja! VEM BUSCAR SEU PRESENTE!"
+            FASE 3: A REVELAÇÃO (Pergunta 10+)
+            - Se acertarem: "ACERTOU!! O baixinho do Thiago tirou O VOVÔ ALVARO! O rei do churrasco, da caminhada e da reclamação de cerveja! VEM BUSCAR SEU PRESENTE!"
 
             REGRAS DE OURO:
             1. Nunca minta sobre fatos físicos (Alvaro é careca).
-            2. Nunca revele o nome antes da hora (Pergunta 10).
+            2. Nunca revele o nome antes da hora.
             3. Use os parentes para comparar e confundir.
             `;
         }
@@ -258,7 +252,7 @@
         targetEntity.addEventListener("targetLost", () => {
             scanOverlay.classList.remove('hidden');
             videoEl.pause();
-            // REMOVIDO: synthesis.cancel() para não cortar a fala
+            synthesis.cancel();
         });
 
         // ==================================================================================
@@ -311,7 +305,7 @@
             } finally {
                 userInput.disabled = false;
                 sendBtn.disabled = false;
-                // REMOVIDO: userInput.focus() para não abrir o teclado
+                userInput.focus();
             }
         }
 
