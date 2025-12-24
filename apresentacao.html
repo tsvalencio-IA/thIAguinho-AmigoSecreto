@@ -32,56 +32,45 @@
 
         .chat-container {
             pointer-events: auto;
-            /* CORREÇÃO CRÍTICA VISUAL: 
-               Fundo agora é transparente na parte de cima para não tapar o Noel.
-               O preto só existe lá embaixo atrás do input para dar leitura. */
-            background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 60%);
+            /* VISUALIZAÇÃO CORRIGIDA: Gradiente totalmente transparente no topo para ver o boneco */
+            background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0) 100%);
             padding: 15px; display: flex; flex-direction: column; gap: 10px;
             padding-bottom: 30px; 
-            /* Borda removida para limpar visão */
-            border-top: none; 
+            border-top: none; /* Borda removida para não criar linha no meio da tela */
         }
 
         #chat-display {
-            /* Mantém as mensagens baixas para foco total no AR */
+            /* VISUALIZAÇÃO CORRIGIDA: Altura travada em 20% para não subir no rosto do AR */
             max-height: 20vh; 
             overflow-y: auto; color: white;
-            text-shadow: 2px 2px 4px black; /* Sombra forte para leitura sem fundo */
-            margin-bottom: 10px; font-size: 14px;
-            /* Esconde barra de rolagem para ficar mais limpo */
-            scrollbar-width: none; 
+            text-shadow: 1px 1px 2px black; margin-bottom: 10px; font-size: 14px;
         }
-        #chat-display::-webkit-scrollbar { display: none; }
 
         .msg {
             margin-bottom: 8px; padding: 10px 14px; border-radius: 12px;
             line-height: 1.4; max-width: 90%; word-wrap: break-word;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.5); /* Sombra na bolha */
         }
-        .msg-user { background-color: rgba(255, 255, 255, 0.95); color: black; align-self: flex-end; margin-left: auto; border-bottom-right-radius: 2px; }
-        /* Msg da IA um pouco mais transparente para ver o vídeo atrás se for grande */
-        .msg-ai { background-color: rgba(204, 0, 0, 0.85); color: white; align-self: flex-start; margin-right: auto; border-bottom-left-radius: 2px; border: 1px solid #ffcc00; }
+        .msg-user { background-color: rgba(255, 255, 255, 0.9); color: black; align-self: flex-end; margin-left: auto; border-bottom-right-radius: 2px; }
+        .msg-ai { background-color: rgba(204, 0, 0, 0.9); color: white; align-self: flex-start; margin-right: auto; border-bottom-left-radius: 2px; border: 1px solid #ffcc00; }
 
         .controls { display: flex; gap: 8px; align-items: center; }
 
         input {
             flex-grow: 1; padding: 14px; border-radius: 30px; border: none; outline: none;
             background: rgba(255, 255, 255, 0.95); font-size: 16px; color: #000;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
         }
 
         .icon-btn {
             width: 50px; height: 50px; border-radius: 50%; border: none;
             display: flex; align-items: center; justify-content: center;
             cursor: pointer; font-size: 24px; color: white; transition: 0.2s;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.5);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
         }
         #micBtn { background-color: #333; border: 2px solid white; }
         #micBtn.listening { background-color: #ffcc00; color: #cc0000; animation: pulse 1s infinite; border-color: #cc0000; }
         #sendBtn { background-color: #cc0000; border: 2px solid #ffcc00; }
 
         #scan-overlay {
-            /* Subi um pouco o overlay para não ficar em cima do chat */
             position: fixed; top: 40%; left: 50%; transform: translate(-50%, -50%);
             text-align: center; z-index: 5000; pointer-events: none;
         }
